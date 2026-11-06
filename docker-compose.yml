@@ -1,0 +1,25 @@
+services:
+  agentscope:
+    build: .
+    image: agentscope:latest
+    restart: unless-stopped
+    ports:
+      - "${AGENTSCOPE_PORT:-8000}:8000"
+    environment:
+      AGENTSCOPE_ADMIN_USER: ${AGENTSCOPE_ADMIN_USER:-admin}
+      # Leave blank to have a random password generated on first run (printed in `docker compose logs`).
+      AGENTSCOPE_ADMIN_PASSWORD: ${AGENTSCOPE_ADMIN_PASSWORD:-}
+      AGENTSCOPE_TOKEN_TTL: ${AGENTSCOPE_TOKEN_TTL:-43200}
+    volumes:
+      - agentscope-data:/data
+      # Optional: lets the Docker monitor read process / filesystem / stats of OTHER containers.
+      # NOTE: ':ro' only protects the socket file, not the API behind it. For least privilege put a
+      # read-only socket proxy in front and set the Docker host in the integration (see README).
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    group_add:
+      - "${DOCKER_GID:-0}"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"   # reach an Agent Zero published on the host, e.g. http://host.docker.internal:5081
+
+volumes:
+  agentscope-data:
